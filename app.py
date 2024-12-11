@@ -10,6 +10,8 @@ def set_var():
 	global variables
 	body = request.json
 	key, value = body['key'], body['value']
+	if key in variables.keys():
+		return 'variable already exists', 403
 	variables[key] = value
 	return 'variable created', 201
 
