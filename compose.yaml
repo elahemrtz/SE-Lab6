@@ -1,0 +1,28 @@
+services:
+  database:
+    container_name: database
+    build:
+      context: .
+      dockerfile: database/Dockerfile
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: "se_lab6_password"
+      POSTGRES_DB: "se_lab6"
+  backend:
+    container_name: backend
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - "5003:5000"
+    environment:
+      PGSQL_DBNAME: "se_lab6"
+      PGSQL_USER: "postgres"
+      PGSQL_PASSWORD: "se_lab6_password"
+      PGSQL_HOST: "database"
+      PGSQL_PORT: "5432"
+    depends_on:
+      - backend
+
+
