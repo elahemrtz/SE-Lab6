@@ -24,5 +24,16 @@ def get_var():
 	return variables[key], 200
 
 
+@app.route('/edit_var', methods=['PUT'])
+def edit_var():
+	global variables
+	body = request.json
+	key, value = body['key'], body['value']
+	if key not in variables.keys():
+		return 'variable not found', 404
+	variables[key] = value
+	return 'variable edited', 200
+
+
 if __name__ == '__main__':
 	app.run()
