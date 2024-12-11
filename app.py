@@ -35,5 +35,16 @@ def edit_var():
 	return 'variable edited', 200
 
 
+@app.route('/delete_var', methods=['DELETE'])
+def delete_var():
+	global variables
+	body = request.json
+	key = body['key']
+	if key not in variables.keys():
+		return 'variable not found', 404
+	del variables[key]
+	return 'variable deleted', 204
+
+
 if __name__ == '__main__':
 	app.run()
