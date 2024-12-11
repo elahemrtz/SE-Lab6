@@ -48,5 +48,5 @@ def delete_var():
 	return 'variable deleted', 204
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 	app.run()
