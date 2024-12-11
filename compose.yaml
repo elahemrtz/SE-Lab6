@@ -23,6 +23,6 @@ services:
       PGSQL_HOST: "database"
       PGSQL_PORT: "5432"
     depends_on:
-      - backend
+      - database
 
 
