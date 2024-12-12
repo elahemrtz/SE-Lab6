@@ -134,3 +134,76 @@ EXPOSE 3000
 
 CMD ["python3", "main.py"]
 ```
+
+## داکرکومپوز
+برای بالا آوردن داکر کومپوز دستور زیر را اجرا میکنیم.
+```shell
+PG_PASS=se_lab6_password;SERVER_COUNT=5; docker compose -f compose.yaml -p se-lab6 up;
+```
+اینگونه میتوان بدون نیاز به تغییرات مکرر در داکرکومپوز و همچنین به منظور رعایت امنیت رمز دیتابیس، متغیر‌های PG_PASS و SERVER_COUNT را به آن پاس دهیم.
+```yaml
+services:
+  database:
+    container_name: database
+    build:
+      context: .
+      dockerfile: database/Dockerfile
+    environment:
+      POSTGRES_PASSWORD: $PG_PASS
+      POSTGRES_DB: "se_lab6"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      mode: replicated
+      replicas: $SERVER_COUNT
+    environment:
+      PGSQL_DBNAME: "se_lab6"
+      PGSQL_USER: "postgres"
+      PGSQL_PASSWORD: $PG_PASS
+      PGSQL_HOST: "database"
+      PGSQL_PORT: "5432"
+    depends_on:
+      - database
+
+  load_balancer:
+    container_name: load_balancer
+    build:
+      context: .
+      dockerfile: load_balancer/Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    environment:
+      PYTHONUNBUFFERED: 1
+      SERVER_COUNT: $SERVER_COUNT
+      LB_HOST: 0.0.0.0
+      LB_PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+```
+نکات مهم درباره‌ی این فایل به شرح زیر است:
+سه سرویس داریم:
+- database: این سرویس فایل Dockerfile موجود در پوشه‌ی database را اجرا میکند. متغیر‌های محیطی POSTGRES_PASSWORD و POSTGRES_DB برای imageای که pull کردیم لازم هستند.
+- backend: این سرویس فایل Dockerfile موجود در پوشه‌ی backend را اجرا میکند.
+    - در صورت بروز خطا در این سرور‌ها بصورت خودکار تا ۳ بار ریستارت میشوند.
+    - این سرو‌ها بصورت replicated هستند. یعنی از یک image به تعداد متغیر replicas کانتینر ساخته میشود. مقدار متغیر replicas را نیز برابر $SERVER_COUNT که پیش‌تر بیان شد، قرار می‌دهیم.
+    - این کانتینر وابسته به کانتینر database است که در ترتیب اجرا و توقف آن تاثیرگذار است.
+    - تعدادی متغیر محیطی برای اتصال به دیتابیس به این کانتینر پاس داده شده است.
+- load_balancer: این سرویس فایل Dockerfile موجود در پوشه‌ی load_balancer را اجرا میکند.
+    - این سرویس نیز مانند بک‌اند درصورت بروز خطا restart میشود.
+    - پورت ۳۰۰۰ این سرویس به پورت ۳۰۰۰ کامپیوتر ما فوروارد میشود. این موضوع امکان برقراری ارتباط از بیرون را به ما میدهد.
+    - تعدادی متغیر محیطی برای تعداد سرور‌های بک‌اند که باید زمان‌بندی بشوند و همچنین آدرسی که واسط ما باید روی آن گوش کند قرار داده‌ایم.
+    - این سرویس هم به سرویس database وابسته است.
