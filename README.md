@@ -90,3 +90,47 @@ FROM postgres:latest
 
 COPY database/db_script.sql /docker-entrypoint-initdb.d/
 ```
+
+## سرور واسط (Load Balancer)
+این قسمت از آزمایش با استفاده از 
+Socket Programming
+به سادگی قابل انجام است. بدین صورت که از ساختار داده‌ی
+cycle 
+برای ساختن یک 
+Iterator
+چرخشی استفاده شده است (تعداد سرور‌های بک‌اند توسط متغیر محیطی 
+SERVER_COUNT
+در داکرکومپوز مشخص شده است.)
+
+درخواست‌های 
+TCP 
+از آدرس
+LB_HOST:LB_PORT
+(متغیرهای محیطی تعیین شده در داکرکومپوز) دریافت میشوند و به سروری که توسط
+cycle
+مشخص شده و پورت ۵۰۰۰ ارسال میشود. وقتی پاسخ درخواست از سرور بازگشت، این پاسخ توسط واسط به مبدا برگردانده میشود.
+
+داکرفایل ایم قسمت مانند قسمت سرور بک‌اند است و ابتدا
+cwd
+را مشخص میکند، سپس 
+requirements.txt
+را به کانتینر کپی میکند و
+dependancyهارا 
+install
+میکند. در نهایت سایر فایل‌ها را کپی کرده و برنامه را اجرا میکند.
+
+```dockerfile
+FROM python:3.11-alpine
+
+WORKDIR load_balancer
+
+COPY load_balancer/requirements.txt requirements.txt
+RUN pip3 install --upgrade pip
+RUN pip3 install -r requirements.txt
+
+COPY load_balancer .
+
+EXPOSE 3000
+
+CMD ["python3", "main.py"]
+```
