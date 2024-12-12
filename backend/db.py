@@ -26,5 +26,6 @@ def key_exists(key: str) -> bool:
 def exec_query(query, params=None, return_value=False):
 	with conn.cursor() as cur:
 		cur.execute(query, params)
+		conn.commit()
 		if return_value:
 			return cur.fetchone()
