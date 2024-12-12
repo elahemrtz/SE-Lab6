@@ -1,0 +1,51 @@
+services:
+  database:
+    container_name: database
+    build:
+      context: .
+      dockerfile: database/Dockerfile
+    environment:
+      POSTGRES_PASSWORD: $PG_PASS
+      POSTGRES_DB: "se_lab6"
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      mode: replicated
+      replicas: $SERVER_COUNT
+    environment:
+      PGSQL_DBNAME: "se_lab6"
+      PGSQL_USER: "postgres"
+      PGSQL_PASSWORD: $PG_PASS
+      PGSQL_HOST: "database"
+      PGSQL_PORT: "5432"
+    depends_on:
+      - database
+
+  load_balancer:
+    container_name: load_balancer
+    build:
+      context: .
+      dockerfile: load_balancer/Dockerfile
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+    environment:
+      PYTHONUNBUFFERED: 1
+      SERVER_COUNT: $SERVER_COUNT
+      LB_HOST: 0.0.0.0
+      LB_PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
