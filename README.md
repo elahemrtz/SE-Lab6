@@ -1,5 +1,5 @@
-## آزمایش ششم: استقرار با استفاده از  داکر
-# سرورها
+# آزمایش ششم: استقرار با استفاده از  داکر
+## سرورها
 برای سرورها یک
 API
 ساده با استفاده از چاروب
@@ -64,3 +64,29 @@ install
 میکنیم. سپس تعدادی متغیر محیطی را مقداردهی میکنیم و سایر فایل‌ها را کپی میکنیم. در نهایت پورت ۵۰۰۰ را 
 Expose
 میکنیم و دستور اجرای برنامه را اجرا میکنیم.
+
+## دیتابیس
+برای دیتابیس ما از 
+PostgreSQL
+استفاده کردیم. برای این کار ابتدا یک 
+script
+ساده برای ساخت جدول نوشتیم و سپس در
+Dockerfile
+آن این
+script
+را به پوشه‌ی
+docker-entrypoint-initdb.d
+کپی کردیم. اینگونه وقتی کانتینتر اجرا میشود، دستورات ما هم اجرا خواهند شد و جداول ساخته میشوند.
+```sql
+CREATE TABLE public.variables (
+    key text PRIMARY KEY,
+    value text NOT NULL
+);
+
+ALTER TABLE public.variables OWNER TO postgres;
+```
+```dockerfile
+FROM postgres:latest
+
+COPY database/db_script.sql /docker-entrypoint-initdb.d/
+```
